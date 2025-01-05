@@ -1,5 +1,6 @@
 import os
 import time
+import warnings
 
 import psutil
 import json
@@ -64,8 +65,8 @@ def load_payload(payload):
         )
         return 0
     except requests.exceptions.ConnectionError as e:
-        print("Binloader server not enabled or device not connected.")
+        warnings.warn("Binloader server not enabled or device not connected.")
         return 1
     except Exception as e:
-        print("Unexpected error:", e)
+        warnings.warn(f"Unexpected error: {e}")
         return 2
