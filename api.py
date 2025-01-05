@@ -34,11 +34,18 @@ def start_pppwn():
         tasks_save["pppoe"] = Process(target=tasks.pppoe_server, args=())
         tasks_save["pppoe"].start()
         if "plugins_load_boot" in config and config["plugins_load_boot"]:
-            while not utils.check_port_enabled("http://192.168.2.1", 3232):
+            while not utils.check_port_enabled("192.168.2.1", 3232):
                 time.sleep(1)
             tasks.inject_payloads_auto()
 
     thread = Thread(target=start_pppwn_process)
+    thread.start()
+    return {}, 203
+
+
+@api.route("/install_trainer", methods=["POST"])
+def install_trainer():
+    thread = Thread(target=tasks.install_trainer)
     thread.start()
     return {}, 203
 

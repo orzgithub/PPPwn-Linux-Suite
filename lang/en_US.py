@@ -26,6 +26,7 @@ class en_US(lang.Base.LangBase):
     TEXT_TITLE_HOME = "PPPwn Suite for PS4"
     TEXT_TITLE_PAYLOAD = "PPPwn Suite for PS4 - Payloads"
     ALERT_PPPWN_STARTING = "PPPwn is starting...\nBefore it finished WebUI will be temporarily unavailable."
+    ALERT_INSTALL_CHEAT_STARTING = "Installing Cheats..."
     ALERT_NO_BIN_SERVER = (
         "BinLoader server is disabled...\nPlease enable it in system settings."
     )

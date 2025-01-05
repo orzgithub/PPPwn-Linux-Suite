@@ -26,6 +26,7 @@ class zh_CN(lang.Base.LangBase):
     TEXT_TITLE_HOME = "PS4 PPPwn套件"
     TEXT_TITLE_PAYLOAD = "PS4 PPPwn套件 - 加载项"
     ALERT_PPPWN_STARTING = "PPPwn启动中…\n在它完成前WebUI将会暂时不可用。"
+    ALERT_INSTALL_CHEAT_STARTING = "安装金手指…"
     ALERT_NO_BIN_SERVER = "BinLoader服务器未启用…\n请在系统设置中启用它。"
     ALERT_NO_FTP_SERVER = "FTP服务器未启用…\n请在系统设置中启用它。"
     ALERT_BIN_SERVER_BUSY = "BinLoader服务器正忙，无法载入加载项.\n请稍后再试。"

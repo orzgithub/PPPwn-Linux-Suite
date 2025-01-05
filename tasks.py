@@ -52,6 +52,20 @@ def inject_payloads_auto():
 
 
 def install_trainer():
+    if not utils.check_port_enabled("192.168.1.2", 2121):
+        return
     ftp = ftplib.FTP()
     ftp.connect("192.168.1.2", 2121)
     ftp.login()
+    dir_list = ["cheats/json", "cheats/shn", "cheats/mc4"]
+    for dir in dir_list:
+        try:
+            ftp.cwd(f"/user/data/GoldHEN/{dir}")
+        except ftplib.error_perm as e:
+            ftp.mkd(f"/user/data/GoldHEN/{dir}")
+            ftp.cwd(f"/user/data/GoldHEN/{dir}")
+        cheat_files = os.listdir(dir)
+        for cheat_file in cheat_files:
+            with open(os.path.join(dir, cheat_file), "rb") as file:
+                ftp.storbinary(f"STOR {cheat_file}", file)
+    ftp.quit()

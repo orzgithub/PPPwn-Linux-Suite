@@ -109,7 +109,12 @@
     }
 
     async function load_cheats() {
-
+        const req = new XMLHttpRequest();
+        req.open("POST", "http://127.0.0.1:2121");
+        req.onerror = () => alert(`{{ lang.ALERT_NO_FTP_SERVER }}`);
+        await fetch("/api/install_trainer", {method: "POST"}).then((response) => {
+            alert(`{{ lang.ALERT_INSTALL_CHEAT_STARTING }}`)
+        });
     }
 
     async function start_pppwn() {
