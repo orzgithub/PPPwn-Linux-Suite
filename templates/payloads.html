@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>{{ lang.TEXT_TITLE_PAYLOAD }}</title>
+    <link href="{{ url_for('static',filename='css/bootstrap.min.css') }}" rel="stylesheet">
+</head>
+<body>
+<script src="{{ url_for('static',filename='js/bootstrap.bundle.min.js') }}"></script>
+<script>
+    /*
+    function load_payload(file) {
+        fetch("http://127.0.0.1:9090/status", {method: "POST", mode: 'cors'}).then(response => response.json())
+            .then(response_json => {
+                if (response_json.status === "ready") {
+                    fetch(file).then(response => response.arrayBuffer()).then(buffer => {
+                        const payload_array = new Uint8Array(buffer);
+                        fetch("http://127.0.0.1:9090", {
+                            method: "POST",
+                            mode: 'cors',
+                            body: payload_array
+                        }).then(response => {
+                            alert(response.status === 200 ? `{{ lang.ALERT_SEND_PAYLOAD_FINISHED }}` : `{{ lang.ALERT_SEND_PAYLOAD_FAILED }}`);
+                        });
+                    });
+                } else alert(`{{ lang.ALERT_BIN_SERVER_BUSY }}`);
+            })
+            .catch(() => alert(`{{ lang.ALERT_NO_BIN_SERVER }}`));
+    }
+     */
+    function get_payload(payload, onLoadEndCallback) {
+        const req = new XMLHttpRequest();
+        req.open('GET', payload);
+        req.responseType = "arraybuffer";
+        req.onload = event => onLoadEndCallback && onLoadEndCallback(req, event);
+        req.send();
+    }
+
+    function send_payload(url, data, onLoadEndCallback) {
+        const req = new XMLHttpRequest();
+        req.open("POST", url, true);
+        req.onload = event => onLoadEndCallback && onLoadEndCallback(req, event);
+        req.send(data);
+    }
+
+    function load_payload(file) {
+        const statusUrl = "http://127.0.0.1:9090/status";
+        const payloadUrl = "http://127.0.0.1:9090";
+        const req = new XMLHttpRequest();
+        req.open("POST", statusUrl);
+        req.onerror = () => alert(`{{ lang.ALERT_NO_BIN_SERVER }}`);
+        req.onload = () => {
+            const responseJson = JSON.parse(req.responseText);
+            if (responseJson.status === "ready") {
+                get_payload(file, req => {
+                    if ((req.status === 200 || req.status === 304) && req.response) {
+                        send_payload(payloadUrl, req.response, req => {
+                            alert(req.status === 200 ? `{{ lang.ALERT_SEND_PAYLOAD_FINISHED }}` : `{{ lang.ALERT_SEND_PAYLOAD_FAILED }}`);
+                        });
+                    }
+                });
+            } else {
+                alert(`{{ lang.ALERT_BIN_SERVER_BUSY }}`);
+            }
+        };
+        req.send();
+    }
+
+    function set_payload(id, payload) {
+        const checked = document.getElementById(id).checked;
+        fetch(checked ? "/api/enable_payload" : "/api/disable_payload", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify([payload])
+        });
+    }
+
+    window.addEventListener("load", function (event) {
+        // Get payloads on server
+        fetch("/api/get_payloads", {method: "GET"}).then((response) => response.json()).then((response_json) => {
+            const main_container = document.getElementById("main_container");
+            let body = "";
+            for (let type in response_json) {
+                body += "<div class=\"card m-3\">" + "\n";
+                body += "<div class=\"card-header\">" + "\n";
+                body += type + "\n";
+                body += "</div>" + "\n";
+                body += "<div class=\"card-body row row-cols-1 row-cols-md-2 row-cols-lg-4 g-1 align-content-center p-3\">" + "\n";
+                for (let payload in response_json[type]) {
+                    body += `<div class="col d-flex${type === 'General' ? ' btn-group' : ''}"${type === 'General' ? ' role="group"' : ''}>` + "\n";
+                    body += `<button id="btn_start_pppwn" type="button" class="btn btn-primary flex-fill" onclick="send_payload('/${response_json[type][payload]}')">${payload}</button>`;
+                    if (type === 'General') {
+                        body += `<input type="checkbox" class="btn-check" id="check_${payload}" autocomplete="off" onchange="set_payload('check_${payload}', '${payload}')"><label class="btn btn-outline-danger" for="check_${payload}"> </label>` + "\n";
+                    }
+                    body += "</div>" + "\n";
+                }
+                body += "</div>" + "\n";
+                body += "</div>" + "\n";
+            }
+            main_container.innerHTML = body;
+            // Get payload for boot list
+            fetch("/api/get_config", {method: "GET"}).then(response => response.json()).then(config => {
+                const payload_after_inject = "plugins_load_boot" in config ? config.plugins_load_boot : [];
+                for (let payload of payload_after_inject) {
+                    const payload_check = document.getElementById(`check_${payload}`);
+                    if (payload_check) payload_check.checked = true;
+                    else console.log(`check_${payload} not exist.`)
+                }
+            });
+        });
+    });
+</script>
+<div class="container" id="main_container">
+</div>
+</body>
+</html>

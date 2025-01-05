@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>{{ lang.TEXT_TITLE_HOME }}</title>
+    <link href="{{ url_for('static',filename='css/bootstrap.min.css') }}" rel="stylesheet">
+</head>
+<body>
+<script src="{{ url_for('static',filename='js/bootstrap.bundle.min.js') }}"></script>
+<script>
+    const fw_payload = [900, 1100];
+
+    window.onload = async function () {
+        await fetch("/api/get_fw_ver", {method: "GET"}).then((response) => response.json()).then((response_json) => {
+            let fw_selection = "";
+            for (let fw_ver in response_json) {
+                fw_selection += `<option value='${fw_ver}'>${response_json[fw_ver]}</option>`;
+                fw_selection += '\n';
+            }
+            document.getElementById("fw_version").innerHTML = fw_selection;
+        });
+        await fetch("/api/get_lang", {method: "GET"}).then((response) => response.json()).then((response_json) => {
+            let lang_selection = "";
+            for (let lang in response_json) {
+                lang_selection += `<option value='${lang}'>${response_json[lang]}</option>`;
+                lang_selection += '\n';
+            }
+            document.getElementById("language").innerHTML = lang_selection;
+        });
+        await fetch("/api/get_interface", {method: "GET"}).then((response) => response.json()).then((response_json) => {
+            let interface_selection = "";
+            for (let interface_name of response_json) {
+                interface_selection += `<option value='${interface_name}'>${interface_name}</option>`;
+                interface_selection += '\n';
+            }
+            document.getElementById("interface").innerHTML = interface_selection;
+        });
+        await fetch("/api/get_config", {method: "GET"}).then((response) => response.json()).then((response_json) => {
+            if ('language' in response_json) document.getElementById("language").value = response_json.language;
+            else {
+                switch (navigator.language) {
+                    case "zh-CN":
+                        document.getElementById("language").value = "zh_CN";
+                        break;
+                    case "en-US":
+                    default:
+                        document.getElementById("language").value = "en_US";
+                        break;
+                }
+                fetch("/api/save_config", {
+                    method: "POST",
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({language: document.getElementById("language").value})
+                });
+            }
+            if ('fw_version' in response_json) {
+                if (fw_payload.includes(response_json.fw_version)) {
+                    document.getElementById("div_btn").innerHTML += `
+                    <div class="col d-flex" id="div_btn_payloads">
+                        <button id="btn_payloads" type="button"
+                            class="btn btn-secondary flex-fill"
+                            onclick="window.location.href='/payloads'">{{ lang.BUTTON_PAYLOADS }}
+                        </button>
+                    </div>
+                    `;
+                    document.getElementById("div_btn").classList.remove("row-cols-lg-3");
+                    document.getElementById("div_btn").classList.add("row-cols-lg-4");
+                }
+                document.getElementById("fw_version").value = response_json.fw_version;
+            }
+            if ('interface' in response_json) document.getElementById("interface").value = response_json.interface;
+            if ('timeout' in response_json) document.getElementById("timeout").value = response_json.timeout;
+            if ('wait_after_pin' in response_json) document.getElementById("wait_after_pin").value = response_json.wait_after_pin;
+            if ('groom_delay' in response_json) document.getElementById("groom_delay").value = response_json.groom_delay;
+            if ('buffer_size' in response_json) document.getElementById("buffer_size").value = response_json.buffer_size;
+            if ('start_on_boot' in response_json) document.getElementById("start_on_boot").checked = response_json.start_on_boot;
+            if ('auto_retry' in response_json) document.getElementById("auto_retry").checked = response_json.auto_retry;
+            if ('no_wait_padi' in response_json) document.getElementById("no_wait_padi").checked = response_json.no_wait_padi;
+            if ('real_sleep' in response_json) document.getElementById("real_sleep").checked = response_json.real_sleep;
+            if ('old_ipv6' in response_json) document.getElementById("old_ipv6").checked = response_json.old_ipv6;
+        })
+    }
+
+    async function save_config() {
+        let configObject = {};
+        if (document.getElementById("language").value != '') configObject["language"] = document.getElementById("language").value;
+        if (document.getElementById("interface").value != '') configObject["interface"] = document.getElementById("interface").value;
+        if (document.getElementById("fw_version").value != '') configObject["fw_version"] = Number(document.getElementById("fw_version").value);
+        if (document.getElementById("timeout").value != '') configObject["timeout"] = Number(document.getElementById("timeout").value);
+        if (document.getElementById("wait_after_pin").value != '') configObject["wait_after_pin"] = Number(document.getElementById("wait_after_pin").value);
+        if (document.getElementById("groom_delay").value != '') configObject["groom_delay"] = Number(document.getElementById("groom_delay").value);
+        if (document.getElementById("buffer_size").value != '') configObject["buffer_size"] = Number(document.getElementById("buffer_size").value);
+        configObject["start_on_boot"] = document.getElementById("start_on_boot").checked;
+        configObject["auto_retry"] = document.getElementById("auto_retry").checked;
+        configObject["no_wait_padi"] = document.getElementById("no_wait_padi").checked;
+        configObject["real_sleep"] = document.getElementById("real_sleep").checked;
+        configObject["old_ipv6"] = document.getElementById("old_ipv6").checked;
+        console.log(configObject);
+        await fetch("/api/save_config", {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(configObject)
+        }).then((response) => {
+            alert('{{ lang.ALERT_SAVED }}')
+            location.reload()
+        });
+        return false;
+    }
+
+    async function load_cheats() {
+
+    }
+
+    async function start_pppwn() {
+        await fetch("/api/start_pppwn", {method: "POST"}).then((response) => {
+            alert(`{{ lang.ALERT_PPPWN_STARTING }}`)
+            location.reload()
+        });
+    }
+</script>
+<div class="container">
+    <div class="card m-3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 50 50"
+             class="align-self-center" alt="PS4 Logo">
+            <path d="M 1 19 A 1.0001 1.0001 0 1 0 1 21 L 12.5 21 C 13.340812 21 14 21.659188 14 22.5 C 14 23.340812 13.340812 24 12.5 24 L 3 24 C 1.3550302 24 0 25.35503 0 27 L 0 30 A 1.0001 1.0001 0 1 0 2 30 L 2 27 C 2 26.43497 2.4349698 26 3 26 L 12.5 26 C 14.28508 26 15.719786 24.619005 15.921875 22.884766 A 1.0001 1.0001 0 0 0 16 22.5 C 16 20.578812 14.421188 19 12.5 19 L 1 19 z M 26 19 C 24.35503 19 23 20.35503 23 22 L 23 28 C 23 28.56503 22.56503 29 22 29 L 16 29 A 1.0001 1.0001 0 1 0 16 31 L 22 31 C 23.64497 31 25 29.64497 25 28 L 25 22 C 25 21.43497 25.43497 21 26 21 L 32 21 A 1.0001 1.0001 0 1 0 32 19 L 26 19 z M 46.970703 19 A 1.0001 1.0001 0 0 0 46.503906 19.130859 L 32.503906 27.130859 A 1.0001 1.0001 0 0 0 33 29 L 46 29 L 46 30 A 1.0001 1.0001 0 1 0 48 30 L 48 29 L 49 29 A 1.0001 1.0001 0 1 0 49 27 L 48 27 L 48 20 A 1.0001 1.0001 0 0 0 46.970703 19 z M 46 21.724609 L 46 27 L 36.767578 27 L 46 21.724609 z"></path>
+        </svg>
+        <div class="card-body row row-cols-1 row-cols-md-2 row-cols-lg-3 g-1 align-content-center p-3" id="div_btn">
+            <div class="col d-flex" id="div_btn_start_pppwn">
+                <button id="btn_start_pppwn" type="button"
+                        class="btn btn-primary flex-fill"
+                        onclick="start_pppwn()">{{ lang.BUTTON_START_PPPWN }}
+                </button>
+            </div>
+            <div class="col d-flex" id="div_btn_settings">
+                <button id="btn_settings" type="button"
+                        class="btn btn-secondary flex-fill"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal_config">{{ lang.BUTTON_SETTINGS }}
+                </button>
+            </div>
+            <div class="col d-flex" id="div_btn_cheats">
+                <button id="btn_cheats" type="button"
+                        class="btn btn-secondary flex-fill"
+                        onclick="load_cheats()">{{ lang.BUTTON_LOAD_CHEATS }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal_config" tabindex="-1" aria-labelledby="modal_config_label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="modal_config_label">{{ lang.BUTTON_SETTINGS }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form_config">
+                    <div class="mb-3">
+                        <label for="language" class="form-label">{{ lang.SETTING_LANGUAGE }}</label>
+                        <select class="form-select" id="language">
+                            <option>{{ lang.TEXT_WAIT_BACKEND }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fw_version" class="form-label">{{ lang.SETTING_FW_VERSION }}</label>
+                        <select class="form-select" id="fw_version">
+                            <option>{{ lang.TEXT_WAIT_BACKEND }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="interface" class="form-label">{{ lang.SETTING_INTERFACE }}</label>
+                        <select class="form-select" id="interface">
+                            <option>{{ lang.TEXT_WAIT_BACKEND }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="timeout" class="form-label">{{ lang.SETTING_TIMEOUT }}</label>
+                        <input type="number" class="form-control" id="timeout" \>
+                    </div>
+                    <div class="mb-3">
+                        <label for="wait_after_pin" class="form-label">{{ lang.SETTING_WAIT_AFTER_PIN }}</label>
+                        <input type="number" class="form-control" id="wait_after_pin" \>
+                    </div>
+                    <div class="mb-3">
+                        <label for="groom_delay" class="form-label">{{ lang.SETTING_GROOM_DELAY }}</label>
+                        <input type="number" class="form-control" id="groom_delay" \>
+                    </div>
+                    <div class="mb-3">
+                        <label for="buffer_size" class="form-label">{{ lang.SETTING_BUFFER_SIZE }}</label>
+                        <input type="number" class="form-control" id="buffer_size" \>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" value="" id="start_on_boot">
+                        <label class="form-check-label" for="start_on_boot">
+                            {{ lang.SETTING_START_ON_BOOT }}
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" value="" id="auto_retry">
+                        <label class="form-check-label" for="auto_retry">
+                            {{ lang.SETTING_AUTO_RETRY }}
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" value="" id="no_wait_padi">
+                        <label class="form-check-label" for="no_wait_padi">
+                            {{ lang.SETTING_NO_WAIT_PADI }}
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" value="" id="real_sleep">
+                        <label class="form-check-label" for="real_sleep">
+                            {{ lang.SETTING_REAL_SLEEP }}
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" value="" id="old_ipv6">
+                        <label class="form-check-label" for="old_ipv6">
+                            {{ lang.SETTING_OLD_IPV6 }}
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ lang.BUTTON_CLOSE }}
+                </button>
+                <button type="button" class="btn btn-primary" onclick="save_config()">
+                    {{ lang.BUTTON_SAVE }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
