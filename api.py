@@ -1,5 +1,6 @@
 import configparser
 import os
+import time
 from threading import Thread
 
 from flask import Flask, request, jsonify, Blueprint
@@ -33,6 +34,8 @@ def start_pppwn():
         tasks_save["pppoe"] = Process(target=tasks.pppoe_server, args=())
         tasks_save["pppoe"].start()
         if "plugins_load_boot" in config and config["plugins_load_boot"]:
+            while not utils.check_port_enabled("http://192.168.2.1", 3232):
+                time.sleep(1)
             tasks.inject_payloads_auto()
 
     thread = Thread(target=start_pppwn_process)

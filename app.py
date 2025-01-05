@@ -31,6 +31,8 @@ def setup():
         and config["start_on_boot"]
         and config["fw_version"] in global_var.payload_list
     ):
+        while not utils.check_port_enabled("http://192.168.2.1", 3232):
+            time.sleep(1)
         thread = Thread(target=tasks.inject_payloads_auto())
         thread.start()
 
